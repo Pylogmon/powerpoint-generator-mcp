@@ -11,7 +11,6 @@ import path from "path";
 import { z } from "zod";
 import os from "os";
 
-// Global instance of pptxgen
 let instances: Record<string, pptxgen> = {};
 let slides: Record<string, pptxgen.Slide> = {};
 let file_server_port = 60000;
@@ -35,13 +34,11 @@ portfinder.getPort((err, port) => {
   }
   app.use("/", express.static(FILES_DIR));
 
-  // 启动服务器
   app.listen(port, () => {
     console.log(`File Server running on port ${port}`);
   });
 });
 
-// Create server instance
 const server = new McpServer({
   name: "mcp-powerpoint-generator",
   version: "0.1.1",
@@ -51,7 +48,6 @@ const server = new McpServer({
   },
 });
 
-// Define the tool to create a PowerPoint presentation
 server.tool(
   "create-presentation",
   "Create a new PowerPoint presentation",
@@ -81,14 +77,9 @@ server.tool(
       .optional()
       .default("1")
       .describe("Revision of the presentation"),
-    layout: z
-      .enum(["LAYOUT_16x9", "LAYOUT_16x10", "LAYOUT_4x3", "LAYOUT_WIDE"])
-      .optional()
-      .default("LAYOUT_16x9")
-      .describe("Layout of the presentation"),
     rtl: z.boolean().default(false).describe("Right to left layout"),
   },
-  async ({ title, subject, author, company, revision, layout, rtl }) => {
+  async ({ title, subject, author, company, revision, rtl }) => {
     const id = nanoid();
     let pptx = new pptxgen();
     pptx.title = title;
@@ -96,7 +87,6 @@ server.tool(
     pptx.author = author;
     pptx.company = company;
     pptx.revision = revision;
-    pptx.layout = layout;
     pptx.rtlMode = rtl;
 
     instances[id] = pptx;
@@ -113,7 +103,6 @@ server.tool(
   }
 );
 
-// Define the tool to add a slide to the presentation
 server.tool(
   "add-slide",
   "Add a slide to the PowerPoint presentation",
@@ -148,17 +137,17 @@ server.tool(
     };
   }
 );
-// Define the tool to add a text box to the slide
+
 server.tool(
   "add-text",
   "Add text to the specified slide",
   {
     slideId: z.string().describe("ID of the slide"),
     text: z.string().describe("Text to add"),
-    x: z.number().describe("X position of the text box"),
-    y: z.number().describe("Y position of the text box"),
-    w: z.number().describe("Width of the text box"),
-    h: z.number().describe("Height of the text box"),
+    x: z.number().min(0).max(10).describe("X position of the text box"),
+    y: z.number().min(0).max(5.5).describe("Y position of the text box"),
+    w: z.number().min(0).max(10).describe("Width of the text box"),
+    h: z.number().min(0).max(5.5).describe("Height of the text box"),
     align: z
       .enum(["left", "center", "right", "justify"])
       .optional()
@@ -198,7 +187,6 @@ server.tool(
   }
 );
 
-// Define the tool to save the presentation
 server.tool(
   "get-file-url",
   "Get the presentation URL, use this tool when you need to get a download link of presentation after completing the presentation.",
