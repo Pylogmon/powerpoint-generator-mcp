@@ -54,7 +54,7 @@ const server = new McpServer({
 // Define the tool to create a PowerPoint presentation
 server.tool(
   "create-presentation",
-  "Create a new PowerPoint presentation (Allways call this tool first and only once)",
+  "Create a new PowerPoint presentation",
   {
     title: z
       .string()
@@ -151,16 +151,27 @@ server.tool(
 // Define the tool to add a text box to the slide
 server.tool(
   "add-text",
-  "Add a text box to the slide",
+  "Add text to the specified slide",
   {
     slideId: z.string().describe("ID of the slide"),
     text: z.string().describe("Text to add"),
-    x: z.number().default(0).describe("X position of the text box"),
-    y: z.number().default(0).describe("Y position of the text box"),
-    w: z.number().default(8).describe("Width of the text box"),
-    h: z.number().default(1).describe("Height of the text box"),
+    x: z.number().describe("X position of the text box"),
+    y: z.number().describe("Y position of the text box"),
+    w: z.number().describe("Width of the text box"),
+    h: z.number().describe("Height of the text box"),
+    align: z
+      .enum(["left", "center", "right", "justify"])
+      .optional()
+      .describe("Text alignment"),
+    bold: z.boolean().optional().default(false).describe("Bold text"),
+    color: z.string().optional().describe("Text color(hex code)"),
+    fontSize: z
+      .number()
+      .optional()
+      .default(18)
+      .describe("Font size of the text"),
   },
-  async ({ slideId, text, x, y, w, h }) => {
+  async ({ slideId, text, x, y, w, h, align, bold, color, fontSize }) => {
     if (!slides[slideId]) {
       return {
         content: [
@@ -173,7 +184,7 @@ server.tool(
       };
     }
     let slide = slides[slideId];
-    slide.addText(text, { x, y, w, h });
+    slide.addText(text, { x, y, w, h, align, bold, color, fontSize });
 
     return {
       content: [
@@ -189,8 +200,8 @@ server.tool(
 
 // Define the tool to save the presentation
 server.tool(
-  "save-presentation",
-  "Save the PowerPoint presentation (Always call this tool last), After this tool is executed, you must send the returned URL to the user.",
+  "get-file-url",
+  "Get the presentation URL, use this tool when you need to get a download link of presentation after completing the presentation.",
   {
     id: z
       .string()
@@ -222,9 +233,15 @@ server.tool(
         content: [
           {
             type: "text",
-            text: `PowerPoint presentation has saved and can be find at http://localhost:${file_server_port}/${encodeURIComponent(
+            text: `http://localhost:${file_server_port}/${encodeURIComponent(
               title
             )}-${id}.pptx`,
+          },
+          {
+            type: "text",
+            text: `NOTE: The user cannot see this link, you need to explicitly send this link to the user.It is recommended to send using the following format: [Download ${title}.pptx](http://localhost:${file_server_port}/${encodeURIComponent(
+              title
+            )}-${id}.pptx)`,
           },
         ],
         isError: false,
