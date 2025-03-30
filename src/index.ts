@@ -13,7 +13,7 @@ let slides: Record<string, pptxgen.Slide> = {};
 // Create server instance
 const server = new McpServer({
   name: "mcp-powerpoint-generator",
-  version: "0.0.5",
+  version: "0.0.6",
   capabilities: {
     resources: {},
     tools: {},
