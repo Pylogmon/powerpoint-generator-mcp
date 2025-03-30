@@ -2,18 +2,49 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import portfinder from "portfinder";
+import { mkdirSync, existsSync } from "fs";
+import express from "express";
 import { nanoid } from "nanoid";
 import pptxgen from "pptxgenjs";
+import path from "path";
 import { z } from "zod";
+import os from "os";
 
 // Global instance of pptxgen
 let instances: Record<string, pptxgen> = {};
 let slides: Record<string, pptxgen.Slide> = {};
+let file_server_port = 60000;
+const BASE_PORT = 60000;
+const MAX_PORT = 65535;
+const FILES_DIR = path.join(os.tmpdir(), "mcp-powerpoint-generator");
+
+portfinder.basePort = BASE_PORT;
+portfinder.highestPort = MAX_PORT;
+
+portfinder.getPort((err, port) => {
+  if (err) {
+    console.error("Could not find an open port:", err);
+    process.exit(1);
+  }
+  file_server_port = port;
+  const app = express();
+
+  if (!existsSync(FILES_DIR)) {
+    mkdirSync(FILES_DIR, { recursive: true });
+  }
+  app.use("/", express.static(FILES_DIR));
+
+  // 启动服务器
+  app.listen(port, () => {
+    console.log(`File Server running on port ${port}`);
+  });
+});
 
 // Create server instance
 const server = new McpServer({
   name: "mcp-powerpoint-generator",
-  version: "0.0.8",
+  version: "0.1.0",
   capabilities: {
     resources: {},
     tools: {},
@@ -159,9 +190,13 @@ server.tool(
 // Define the tool to save the presentation
 server.tool(
   "save-presentation",
-  "Save the PowerPoint presentation (Always call this tool last)",
+  "Save the PowerPoint presentation (Always call this tool last), After this tool is executed, you must send the returned URL to the user.",
   {
-    id: z.string().describe("ID of the presentation"),
+    id: z
+      .string()
+      .describe(
+        "The ID of the presentation returned by the create-presentation tool"
+      ),
   },
   async ({ id }) => {
     if (!instances[id]) {
@@ -176,25 +211,20 @@ server.tool(
       };
     }
     let pptx = instances[id];
+    const title = pptx.title || "PowerPoint Presentation";
     try {
-      let base64Content = (await pptx.write({
-        outputType: "base64",
-      })) as string;
-      let uri = `data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,${base64Content}`;
+      await pptx.writeFile({
+        fileName: path.join(FILES_DIR, `${title}-${id}.pptx`),
+      });
       delete instances[id];
       delete slides[id];
       return {
         content: [
           {
-            type: "resource",
-            resource: {
-              uri: uri,
-              blob: base64Content,
-            },
-          },
-          {
             type: "text",
-            text: `PowerPoint presentation has been sent to the user, "${id}" generated finished.`,
+            text: `PowerPoint presentation has saved and can be find at http://localhost:${file_server_port}/${encodeURIComponent(
+              title
+            )}-${id}.pptx`,
           },
         ],
         isError: false,
