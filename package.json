@@ -3,14 +3,15 @@
   "description": "A PowerPoint generator for Model Context Protocol (MCP) using Bun (Note: Unable to read/operate existing presentation)",
   "author": "Pylogmon",
   "license": "MIT",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "module": "index.ts",
   "type": "module",
   "bin": {
-    "server-powerpoint-generator": "./dist/index.js"
+    "mcp-powerpoint-generator": "./dist/index.js"
   },
   "scripts": {
-    "dev": "bun run src/index.ts",
+    "dev": "bun run ./src/index.ts",
+    "prepublishOnly": "bun run build",
     "build": "bun build ./src/index.ts --outdir dist && chmod 755 dist/index.js"
   },
   "files": [
