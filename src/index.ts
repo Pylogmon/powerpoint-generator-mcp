@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { nanoid } from "nanoid";
@@ -11,7 +13,7 @@ let slides: Record<string, pptxgen.Slide> = {};
 // Create server instance
 const server = new McpServer({
   name: "powerpoint-generator",
-  version: "0.0.2",
+  version: "0.0.3",
   capabilities: {
     resources: {},
     tools: {},

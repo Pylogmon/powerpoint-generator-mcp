@@ -3,7 +3,7 @@
   "description": "A PowerPoint generator for Model Context Protocol (MCP) using Bun (Note: Unable to read/operate existing presentation)",
   "author": "Pylogmon",
   "license": "MIT",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "module": "index.ts",
   "type": "module",
   "bin": {
