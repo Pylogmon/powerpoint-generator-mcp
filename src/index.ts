@@ -13,7 +13,7 @@ let slides: Record<string, pptxgen.Slide> = {};
 // Create server instance
 const server = new McpServer({
   name: "mcp-powerpoint-generator",
-  version: "0.0.6",
+  version: "0.0.7",
   capabilities: {
     resources: {},
     tools: {},
@@ -159,12 +159,11 @@ server.tool(
 // Define the tool to save the presentation
 server.tool(
   "save-presentation",
-  "Save the PowerPoint presentation to a file (Always call this tool last)",
+  "Save the PowerPoint presentation (Always call this tool last)",
   {
     id: z.string().describe("ID of the presentation"),
-    filepath: z.string().describe("Filename to save the presentation"),
   },
-  async ({ id, filepath }) => {
+  async ({ id }) => {
     if (!instances[id]) {
       return {
         content: [
@@ -178,14 +177,20 @@ server.tool(
     }
     let pptx = instances[id];
     try {
-      await pptx.writeFile({ fileName: filepath });
+      let base64Content = (await pptx.write({
+        outputType: "base64",
+      })) as string;
+      let uri = `data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,${base64Content}`;
       delete instances[id];
       delete slides[id];
       return {
         content: [
           {
-            type: "text",
-            text: `PowerPoint presentation "${id}" saved to "${filepath}".`,
+            type: "resource",
+            resource: {
+              uri: uri,
+              blob: base64Content,
+            },
           },
         ],
         isError: false,
