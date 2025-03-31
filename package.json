@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "bun run ./src/index.ts",
     "prepublishOnly": "bun run build",
-    "build": "bun build ./src/index.ts --external '*' --outdir dist"
+    "build": "bun build ./src/* --external '*' --outdir dist"
   },
   "files": [
     "dist"

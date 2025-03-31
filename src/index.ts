@@ -10,6 +10,7 @@ import pptxgen from "pptxgenjs";
 import path from "path";
 import { z } from "zod";
 import os from "os";
+import { CHART_TYPE, SHAPE_TYPE } from "./constant";
 
 let instances: Record<string, pptxgen> = {};
 let slides: Record<string, pptxgen.Slide> = {};
@@ -174,21 +175,32 @@ server.tool(
       };
     }
     let slide = slides[slideId];
-    slide.addText(text, { x, y, w, h, align, bold, color, fontSize });
+    try {
+      slide.addText(text, { x, y, w, h, align, bold, color, fontSize });
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Text box added to slide "${slideId}".`,
-        },
-      ],
-      isError: false,
-    };
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Text box added to slide "${slideId}".`,
+          },
+        ],
+        isError: false,
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error adding text to slide "${slideId}": ${error}`,
+          },
+        ],
+        isError: true,
+      };
+    }
   }
 );
 
-const ITableOptions = z.object({});
 server.tool(
   "add-table",
   "Add a table to the specified slide",
@@ -250,8 +262,14 @@ server.tool(
     y: z.number().min(0).max(5.5).describe("Y position of the table"),
     w: z.number().min(0).max(10).describe("Width of the table"),
     h: z.number().min(0).max(5.5).describe("Height of the table"),
-    colW: z.array(z.number().min(0).max(10)).describe("Each column widths"),
-    rowH: z.array(z.number().min(0).max(5.5)).describe("Each row heights"),
+    colW: z
+      .array(z.number().min(0).max(10))
+      .optional()
+      .describe("Each column widths"),
+    rowH: z
+      .array(z.number().min(0).max(5.5))
+      .optional()
+      .describe("Each row heights"),
     align: z
       .enum(["left", "center", "right"])
       .optional()
@@ -314,31 +332,215 @@ server.tool(
       };
     }
     let slide = slides[slideId];
-    slide.addTable(data, {
-      x,
-      y,
-      w,
-      h,
-      colW,
-      rowH,
-      align,
-      bold,
-      border,
-      color,
-      fill,
-      fontSize,
-      fontFace,
-    });
+    try {
+      slide.addTable(data, {
+        x,
+        y,
+        w,
+        h,
+        colW,
+        rowH,
+        align,
+        bold,
+        border,
+        color,
+        fill,
+        fontSize,
+        fontFace,
+      });
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Text box added to slide "${slideId}".`,
-        },
-      ],
-      isError: false,
-    };
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Table added to slide "${slideId}".`,
+          },
+        ],
+        isError: false,
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error adding table to slide "${slideId}": ${error}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+server.tool(
+  "add-shape",
+  "Add a shape to the specified slide",
+  {
+    slideId: z.string().describe("ID of the slide"),
+    shape: z.enum(SHAPE_TYPE as [string, ...string[]]).describe("Shape type"),
+    x: z.number().min(0).max(10).describe("X position of the shape"),
+    y: z.number().min(0).max(5.5).describe("Y position of the shape"),
+    w: z.number().min(0).max(10).describe("Width of the shape"),
+    h: z.number().min(0).max(5.5).describe("Height of the shape"),
+    align: z
+      .enum(["left", "center", "right"])
+      .optional()
+      .describe("Shape alignment"),
+    flipH: z.boolean().optional().default(false).describe("Flip horizontally"),
+    flipV: z.boolean().optional().default(false).describe("Flip vertically"),
+    line: z
+      .object({
+        color: z.string().describe("Line color(hex code)"),
+        dashType: z
+          .enum([
+            "dash",
+            "dashDot",
+            "lgDash",
+            "lgDashDot",
+            "lgDashDotDot",
+            "solid",
+            "sysDash",
+            "sysDot",
+          ])
+          .describe("Line type"),
+        beginArrowType: z
+          .enum(["arrow", "diamond", "oval", "stealth", "triangle", "none"])
+          .describe("Line ending"),
+        endArrowType: z
+          .enum(["arrow", "diamond", "oval", "stealth", "triangle", "none"])
+          .describe("Line heading"),
+        transparency: z.number().min(0).max(100).describe("Line transparency"),
+        width: z.number().min(1).max(256).describe("Line width"),
+      })
+      .optional()
+      .describe("Shape Line options"),
+    rectRadius: z
+      .number()
+      .min(0)
+      .max(1)
+      .optional()
+      .describe("Rectangle radius(Only for roundRect)"),
+    rotate: z.number().min(-360).max(360).optional().describe("Rotation angle"),
+    fill: z
+      .object({
+        color: z.string().describe("Fill color hex code"),
+        transparency: z
+          .number()
+          .min(0)
+          .max(100)
+          .optional()
+          .describe("Transparency of the fill color"),
+      })
+      .optional()
+      .describe("Fill color options"),
+  },
+  async ({ slideId, shape, x, y, w, h, fill }) => {
+    if (!slides[slideId]) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Slide "${slideId}" not found, please create it first.`,
+          },
+        ],
+        isError: true,
+      };
+    }
+    let slide = slides[slideId];
+    try {
+      slide.addShape(shape as pptxgen.SHAPE_NAME, {
+        x,
+        y,
+        w,
+        h,
+        fill,
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Shape added to slide "${slideId}".`,
+          },
+        ],
+        isError: false,
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error adding shape to slide "${slideId}": ${error}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+
+server.tool(
+  "add-chart",
+  "Add a chart to the specified slide",
+  {
+    slideId: z.string().describe("ID of the slide"),
+    chartType: z
+      .enum(CHART_TYPE as [string, ...string[]])
+      .describe("Chart type"),
+    data: z
+      .array(
+        z.object({
+          name: z.string().describe("Chart name"),
+          labels: z.array(z.string()).describe("Chart labels"),
+          values: z.array(z.number()).describe("Chart values"),
+        })
+      )
+      .describe("Chart data"),
+    x: z.number().min(0).max(10).describe("X position of the chart"),
+    y: z.number().min(0).max(5.5).describe("Y position of the chart"),
+    w: z.number().min(0).max(10).describe("Width of the chart"),
+    h: z.number().min(0).max(5.5).describe("Height of the chart"),
+  },
+  async ({ slideId, chartType, data, x, y, w, h }) => {
+    if (!slides[slideId]) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Slide "${slideId}" not found, please create it first.`,
+          },
+        ],
+        isError: true,
+      };
+    }
+    let slide = slides[slideId];
+    try {
+      slide.addChart(chartType as pptxgen.CHART_NAME, data, {
+        x,
+        y,
+        w,
+        h,
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Chart added to slide "${slideId}".`,
+          },
+        ],
+        isError: false,
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error adding chart to slide "${slideId}": ${error}`,
+          },
+        ],
+        isError: true,
+      };
+    }
   }
 );
 
