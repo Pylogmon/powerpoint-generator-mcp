@@ -154,6 +154,7 @@ server.tool(
       .describe("Text alignment"),
     bold: z.boolean().optional().default(false).describe("Bold text"),
     color: z.string().optional().describe("Text color(hex code)"),
+    FontFace: z.string().optional().describe("Font face"),
     fontSize: z
       .number()
       .optional()
@@ -174,6 +175,160 @@ server.tool(
     }
     let slide = slides[slideId];
     slide.addText(text, { x, y, w, h, align, bold, color, fontSize });
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Text box added to slide "${slideId}".`,
+        },
+      ],
+      isError: false,
+    };
+  }
+);
+
+const ITableOptions = z.object({});
+server.tool(
+  "add-table",
+  "Add a table to the specified slide",
+  {
+    slideId: z.string().describe("ID of the slide"),
+    data: z.array(
+      z
+        .array(
+          z.object({
+            text: z.string(),
+            options: z
+              .object({
+                align: z
+                  .enum(["left", "center", "right"])
+                  .optional()
+                  .describe("Table alignment"),
+                bold: z
+                  .boolean()
+                  .optional()
+                  .default(false)
+                  .describe("Bold text"),
+                border: z
+                  .object({
+                    type: z
+                      .enum(["none", "solid", "dash"])
+                      .describe("Border type"),
+                    pt: z.number().min(0).max(10).describe("Border thickness"),
+                    color: z.string().describe("Border color(hex code)"),
+                  })
+                  .optional()
+                  .describe("Border options"),
+                color: z.string().optional().describe("Text color(hex code)"),
+                fill: z
+                  .object({
+                    color: z.string().describe("Fill color hex code"),
+                    transparency: z
+                      .number()
+                      .min(0)
+                      .max(100)
+                      .optional()
+                      .describe("Transparency of the fill color"),
+                  })
+                  .optional()
+                  .describe("Fill color"),
+                fontSize: z
+                  .number()
+                  .optional()
+                  .default(18)
+                  .describe("Font size of the text"),
+                fontFace: z.string().optional().describe("Font face"),
+              })
+              .optional()
+              .describe("Options for the cell"),
+          })
+        )
+        .describe("Data for the table")
+    ),
+    x: z.number().min(0).max(10).describe("X position of the table"),
+    y: z.number().min(0).max(5.5).describe("Y position of the table"),
+    w: z.number().min(0).max(10).describe("Width of the table"),
+    h: z.number().min(0).max(5.5).describe("Height of the table"),
+    colW: z.array(z.number().min(0).max(10)).describe("Each column widths"),
+    rowH: z.array(z.number().min(0).max(5.5)).describe("Each row heights"),
+    align: z
+      .enum(["left", "center", "right"])
+      .optional()
+      .describe("Table alignment"),
+    bold: z.boolean().optional().default(false).describe("Bold text"),
+    border: z
+      .object({
+        type: z.enum(["none", "solid", "dash"]).describe("Border type"),
+        pt: z.number().min(0).max(10).describe("Border thickness"),
+        color: z.string().describe("Border color(hex code)"),
+      })
+      .optional()
+      .describe("Border options"),
+    color: z.string().optional().describe("Text color(hex code)"),
+    fill: z
+      .object({
+        color: z.string().describe("Fill color hex code"),
+        transparency: z
+          .number()
+          .min(0)
+          .max(100)
+          .optional()
+          .describe("Transparency of the fill color"),
+      })
+      .optional()
+      .describe("Fill color"),
+    fontSize: z
+      .number()
+      .optional()
+      .default(18)
+      .describe("Font size of the text"),
+    fontFace: z.string().optional().describe("Font face"),
+  },
+  async ({
+    slideId,
+    data,
+    x,
+    y,
+    w,
+    h,
+    colW,
+    rowH,
+    align,
+    bold,
+    border,
+    color,
+    fill,
+    fontSize,
+    fontFace,
+  }) => {
+    if (!slides[slideId]) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Slide "${slideId}" not found, please create it first.`,
+          },
+        ],
+        isError: true,
+      };
+    }
+    let slide = slides[slideId];
+    slide.addTable(data, {
+      x,
+      y,
+      w,
+      h,
+      colW,
+      rowH,
+      align,
+      bold,
+      border,
+      color,
+      fill,
+      fontSize,
+      fontFace,
+    });
 
     return {
       content: [
