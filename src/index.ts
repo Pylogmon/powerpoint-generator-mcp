@@ -42,7 +42,7 @@ portfinder.getPort((err, port) => {
 
 const server = new McpServer({
   name: "mcp-powerpoint-generator",
-  version: "0.1.2",
+  version: "0.1.3",
   capabilities: {
     resources: {},
     tools: {},
