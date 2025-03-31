@@ -1,15 +1,19 @@
 # @pylogmonmcp/powerpoint-generator
 
-To install dependencies:
+A PowerPoint generator for Model Context Protocol (MCP) using Bun (Note: Unable to read/edit existing presentation)
+
+## Tools
+
+- create-presentation
+- add-slide
+- add-text
+- add-table
+- add-shape
+- add-chart
+- get-file-url
+
+## Start Server
 
 ```bash
-bun install
+bunx -y @pylogmonmcp/powerpoint-generator
 ```
-
-To run:
-
-```bash
-bun run src/index.ts
-```
-
-This project was created using `bun init` in bun v1.1.13. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.

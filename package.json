@@ -1,6 +1,6 @@
 {
   "name": "@pylogmonmcp/powerpoint-generator",
-  "description": "A PowerPoint generator for Model Context Protocol (MCP) using Bun (Note: Unable to read/operate existing presentation)",
+  "description": "A PowerPoint generator for Model Context Protocol (MCP) using Bun (Note: Unable to read/edit existing presentation)",
   "author": "Pylogmon",
   "license": "MIT",
   "version": "0.1.2",
