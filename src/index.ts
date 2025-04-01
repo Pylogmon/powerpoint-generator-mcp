@@ -2,6 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { CHART_TYPE, SHAPE_TYPE } from "./constant.js";
 import portfinder from "portfinder";
 import { mkdirSync, existsSync } from "fs";
 import express from "express";
@@ -10,7 +11,6 @@ import pptxgen from "pptxgenjs";
 import path from "path";
 import { z } from "zod";
 import os from "os";
-import { CHART_TYPE, SHAPE_TYPE } from "./constant";
 
 let instances: Record<string, pptxgen> = {};
 let slides: Record<string, pptxgen.Slide> = {};
@@ -42,7 +42,7 @@ portfinder.getPort((err, port) => {
 
 const server = new McpServer({
   name: "mcp-powerpoint-generator",
-  version: "0.1.3",
+  version: "0.1.4",
   capabilities: {
     resources: {},
     tools: {},
